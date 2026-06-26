@@ -38,3 +38,23 @@ def test_submit_writes_audit_entry(client):
     entries = r.get_json()["entries"]
     assert len(entries) == 1
     assert entries[0]["attribution"] == "likely_ai"
+
+
+def test_submit_runs_real_stylometry(tmp_path, monkeypatch):
+    # Only the LLM (network) signal is stubbed; the real stylometry signal must
+    # actually flow through /submit and produce a genuine score in [0,1].
+    db = str(tmp_path / "real_stylo.db")
+    monkeypatch.setattr(app_module, "DB_PATH", db)
+    monkeypatch.setattr(storage, "DB_PATH", db)
+    monkeypatch.setattr(app_module, "llm_score", lambda t: 0.5)
+    storage.init_db(db)
+    app_module.app.config["TESTING"] = True
+    client = app_module.app.test_client()
+
+    text = ("The quarterly report indicates steady growth. Revenue increased. "
+            "Margins held firm across every operating segment this period.")
+    r = client.post("/submit", json={"text": text, "creator_id": "u1"})
+    assert r.status_code == 200
+    stylo = r.get_json()["stylometry_score"]
+    assert 0.0 <= stylo <= 1.0
+    assert stylo != 0.5  # proves the real signal ran, not a constant stub

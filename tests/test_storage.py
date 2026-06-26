@@ -31,7 +31,7 @@ def test_get_missing_returns_none(db_path):
 def test_update_status(db_path):
     storage.init_db(db_path)
     storage.save_submission(_sample(), db_path)
-    ok = storage.update_status("c1", "under_review", "I wrote this myself", db_path)
+    ok = storage.update_status("c1", "under_review", db_path)
     assert ok is True
     row = storage.get_content("c1", db_path)
     assert row["status"] == "under_review"
@@ -39,7 +39,7 @@ def test_update_status(db_path):
 
 def test_update_status_missing_returns_false(db_path):
     storage.init_db(db_path)
-    assert storage.update_status("nope", "under_review", "x", db_path) is False
+    assert storage.update_status("nope", "under_review", db_path) is False
 
 
 def test_audit_append_and_recent(db_path):

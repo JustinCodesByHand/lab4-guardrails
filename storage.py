@@ -74,8 +74,7 @@ def get_content(content_id: str, db_path: str = DB_PATH) -> dict | None:
     return dict(row) if row else None
 
 
-def update_status(content_id: str, status: str, reasoning: str,
-                  db_path: str = DB_PATH) -> bool:
+def update_status(content_id: str, status: str, db_path: str = DB_PATH) -> bool:
     with _conn(db_path) as conn:
         cur = conn.execute(
             "UPDATE submissions SET status = ? WHERE content_id = ?",

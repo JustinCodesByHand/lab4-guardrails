@@ -3,7 +3,9 @@ import statistics
 
 from config import STYLO_VAR_WEIGHT, STYLO_PUNCT_WEIGHT, STYLO_TTR_WEIGHT
 
-_PUNCT_CHARS = [",", ";", ":", ".", "!", "?", "-", "—", "(", ")", '"', "'", "..."]
+# Single characters only: an ellipsis "..." is already captured by "." — listing it
+# separately would double-count any text containing an ellipsis.
+_PUNCT_CHARS = [",", ";", ":", ".", "!", "?", "-", "—", "(", ")", '"', "'"]
 
 
 def _clamp(x: float) -> float:
@@ -47,6 +49,8 @@ def punctuation_subscore(text: str) -> float:
 
 def stylometry_score(text: str) -> float:
     """Weighted average of three sub-scores. Returns P(AI) in [0,1]."""
+    if not _words(text):
+        return 0.5  # edge case B: degenerate/empty input — stay neutral
     var = sentence_length_subscore(text)
     ttr = type_token_ratio_subscore(text)
     punct = punctuation_subscore(text)
