@@ -58,3 +58,23 @@ def test_submit_runs_real_stylometry(tmp_path, monkeypatch):
     stylo = r.get_json()["stylometry_score"]
     assert 0.0 <= stylo <= 1.0
     assert stylo != 0.5  # proves the real signal ran, not a constant stub
+
+
+def test_appeal_updates_status_and_logs(client):
+    sub = client.post("/submit", json={"text": "my poem", "creator_id": "u1"}).get_json()
+    cid = sub["content_id"]
+    r = client.post("/appeal", json={"content_id": cid,
+                                     "creator_reasoning": "I wrote this myself."})
+    assert r.status_code == 200
+    assert r.get_json()["status"] == "under_review"
+
+    # appeal shows in the log with reasoning
+    entries = client.get("/log").get_json()["entries"]
+    appeal_entries = [e for e in entries if e["appeal_reasoning"]]
+    assert any(e["content_id"] == cid for e in appeal_entries)
+
+
+def test_appeal_unknown_id_is_404(client):
+    r = client.post("/appeal", json={"content_id": "ghost",
+                                     "creator_reasoning": "x"})
+    assert r.status_code == 404

@@ -52,5 +52,32 @@ def log():
     return jsonify({"entries": storage.recent_log(50, DB_PATH)})
 
 
+@app.route("/appeal", methods=["POST"])
+def appeal():
+    body = request.get_json(silent=True) or {}
+    content_id = (body.get("content_id") or "").strip()
+    reasoning = (body.get("creator_reasoning") or "").strip()
+    if not content_id or not reasoning:
+        return jsonify({"error": "content_id and creator_reasoning are required"}), 400
+
+    original = storage.get_content(content_id, DB_PATH)
+    if original is None:
+        return jsonify({"error": "content_id not found"}), 404
+
+    storage.update_status(content_id, "under_review", DB_PATH)
+    storage.append_audit({
+        "content_id": content_id, "creator_id": original["creator_id"],
+        "attribution": original["attribution"], "confidence": original["confidence"],
+        "llm_score": original["llm_score"],
+        "stylometry_score": original["stylometry_score"],
+        "status": "under_review", "appeal_reasoning": reasoning,
+    }, DB_PATH)
+
+    return jsonify({
+        "content_id": content_id, "status": "under_review",
+        "message": "Appeal received. This content is now under human review.",
+    })
+
+
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
