@@ -79,5 +79,13 @@ def appeal():
     })
 
 
+@app.route("/content/<content_id>", methods=["GET"])
+def content(content_id):
+    rec = storage.get_content(content_id, DB_PATH)
+    if rec is None:
+        return jsonify({"error": "content_id not found"}), 404
+    return jsonify(rec)
+
+
 if __name__ == "__main__":
     app.run(port=5000, debug=True)

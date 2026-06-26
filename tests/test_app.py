@@ -78,3 +78,12 @@ def test_appeal_unknown_id_is_404(client):
     r = client.post("/appeal", json={"content_id": "ghost",
                                      "creator_reasoning": "x"})
     assert r.status_code == 404
+
+
+def test_content_lookup_and_404(client):
+    sub = client.post("/submit", json={"text": "hi there", "creator_id": "u1"}).get_json()
+    cid = sub["content_id"]
+    ok = client.get(f"/content/{cid}")
+    assert ok.status_code == 200
+    assert ok.get_json()["content_id"] == cid
+    assert client.get("/content/ghost").status_code == 404
