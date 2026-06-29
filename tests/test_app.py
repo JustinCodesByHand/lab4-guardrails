@@ -16,6 +16,13 @@ def client(tmp_path, monkeypatch):
     return app_module.app.test_client()
 
 
+def test_index_serves_ui(client):
+    r = client.get("/")
+    assert r.status_code == 200
+    assert "text/html" in r.content_type
+    assert "Provenance Guard" in r.get_data(as_text=True)
+
+
 def test_submit_returns_full_shape(client):
     r = client.post("/submit", json={"text": "some text here", "creator_id": "u1"})
     assert r.status_code == 200
